@@ -49,7 +49,7 @@ export default {
 
     const paymentHeader = r.headers.get("X-Payment") || r.headers.get("Payment-Signature");
 
-    // If no payment header is provided, issue the HTTP 402 challenge
+    // Step 1: Issue HTTP 402 challenge if no payment proof header is attached
     if (!paymentHeader) {
       const body = {
         x402Version: "1",
@@ -73,16 +73,42 @@ export default {
       });
     }
 
-    // Production check: Validate payment proof or signature format
-    // (In production, you can add an external verify call here to the x402 facilitator endpoint)
-    if (paymentHeader.length < 10) {
-      return new Response(JSON.stringify({ error: "Invalid payment signature format" }), {
-        status: 400,
+    // Step 2: Rigorous On-Chain / Facilitator Verification
+    try {
+      const verifyRes = await fetch("https://x402.org/facilitator/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          payment: paymentHeader,
+          expectedPayTo: W,
+          expectedAmount: cfg[0],
+          expectedAsset: U,
+          expectedNetwork: "eip155:8453"
+        })
+      });
+
+      const verification = await verifyRes.json();
+      
+      if (!verifyRes.ok || !verification.valid) {
+        return new Response(JSON.stringify({ 
+          error: "Payment verification failed", 
+          reason: verification.error || "Invalid cryptographic signature, wrong amount, or unsettled transaction." 
+        }), {
+          status: 402,
+          headers: { ...c, "Content-Type": "application/json" }
+        });
+      }
+    } catch (err) {
+      return new Response(JSON.stringify({ 
+        error: "Facilitator validation error", 
+        details: err.message 
+      }), {
+        status: 502,
         headers: { ...c, "Content-Type": "application/json" }
       });
     }
 
-    // Serve the actual requested dataset payload upon valid payment proof
+    // Step 3: Verified settlement — deliver real data payload
     return new Response(JSON.stringify({
       status: "success",
       endpoint: p,
