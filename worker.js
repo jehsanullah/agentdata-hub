@@ -36,34 +36,55 @@ export default {
 
     if (r.method === "OPTIONS") return new Response(null, { headers: c });
 
-    if (p === "/" || p === "/llms.txt") {
-      if (p === "/llms.txt") {
-        const catalogDetails = Object.entries(P).map(([endpoint, val]) => {
-          return `### ${endpoint}\n- **Price:** ${val[1]} USDC (${val[0]} base units)\n- **Response Schema Example:** \`${JSON.stringify(val[2])}\``;
-        }).join("\n\n");
-
-        const llmsTxtContent = `# AgentData UK Intelligence Gateway
-Base URL: https://agentdata.site
-Network: Base (Chain ID: 8453)
-Settlement Asset: USDC (${U})
-Payment Protocol: x402
-
-## Overview
-AgentData UK provides real-time UK intelligence streams across property, automotive, environmental, and macroeconomic sectors. All endpoints require x402 micro-payment authorization prior to payload delivery.
-
-## Endpoint Catalog & Data Schemas
-${catalogDetails}`;
-
-        return new Response(llmsTxtContent, { headers: { ...c, "Content-Type": "text/plain; charset=utf-8" } });
-      }
-
+    // Root status handler
+    if (p === "/") {
       return new Response(JSON.stringify({ 
         status: "active", 
         service: "AgentData UK Gateway", 
         network: "Base", 
         pay_to: W, 
-        endpoints_count: Object.keys(P).length 
+        endpoints_count: Object.keys(P).length,
+        sample_endpoint: "https://agentdata.site/api/sample",
+        manifest: "https://agentdata.site/llms.txt"
       }), { headers: { ...c, "Content-Type": "application/json" } });
+    }
+
+    // AI Crawler Manifest
+    if (p === "/llms.txt") {
+      const catalogDetails = Object.entries(P).map(([endpoint, val]) => {
+        return `### ${endpoint}\n- **Price:** ${val[1]} USDC (${val[0]} base units)\n- **Response Schema Example:** \`${JSON.stringify(val[2])}\``;
+      }).join("\n\n");
+
+      const llmsTxtContent = `# AgentData UK Intelligence Gateway
+Base URL: https://agentdata.site
+Network: Base (Chain ID: 8453)
+Settlement Asset: USDC (${U})
+Payment Protocol: x402
+Free Sample Endpoint: https://agentdata.site/api/sample
+
+## Overview
+AgentData UK provides real-time UK intelligence streams across property, automotive, environmental, and macroeconomic sectors. All core endpoints require x402 micro-payment authorization prior to payload delivery.
+
+## Endpoint Catalog & Data Schemas
+${catalogDetails}`;
+
+      return new Response(llmsTxtContent, { headers: { ...c, "Content-Type": "text/plain; charset=utf-8" } });
+    }
+
+    // Dedicated Free Sample API Endpoint for Evaluators & AI Agents
+    if (p === "/api/sample") {
+      const samples = {};
+      for (const [endpoint, val] of Object.entries(P)) {
+        samples[endpoint] = {
+          price_usdc: val[1],
+          schema_example: val[2]
+        };
+      }
+      return new Response(JSON.stringify({
+        status: "success",
+        description: "Free structural schema samples for AgentData UK endpoints. Use these schemas to build parsing logic before executing x402 paid requests.",
+        samples: samples
+      }, null, 2), { headers: { ...c, "Content-Type": "application/json" } });
     }
 
     const cfg = P[p];
