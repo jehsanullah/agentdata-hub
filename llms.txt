@@ -1,0 +1,36 @@
+# AgentData UK
+Base URL: https://agentdata.site
+Network: Base
+Asset: USDC (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
+Merchant Wallet: 0x8dd0342f58b727acfa82ddf5b4570577e0d87010
+
+## Catalog & Endpoint Pricing
+
+### $0.05 USDC Tier
+- /api/environment/flood-map
+- /api/property/epc-chart
+- /api/property/full-report
+
+### $0.02 USDC Tier
+- /api/company/gazette
+- /api/company/charges
+- /api/automotive/mot-history
+- /api/property/constraints
+
+### $0.01 USDC Tier
+- /api/company/profile
+- /api/property/epc
+- /api/property/sold-prices
+- /api/energy/regional-cap
+- /api/insurance/benchmarks
+
+### $0.005 USDC Tier
+- /api/macro/inflation
+- /api/news/headlines
+- /api/council
+- /api/fuel/road-prices
+- /api/events/local
+- /api/postcode
+- /api/environment
+- /api/materials
+- /api/stock
