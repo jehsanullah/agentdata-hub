@@ -38,10 +38,32 @@ export default {
 
     if (p === "/" || p === "/llms.txt") {
       if (p === "/llms.txt") {
-        return new Response(`# AgentData UK\nBase URL: https://agentdata.site\nNetwork: Base\nAsset: USDC (${U})\n\n## Catalog\n` + 
-          Object.entries(P).map(([e, v]) => `- ${e} (${v[1]} USDC)`).join("\n"), { headers: { ...c, "Content-Type": "text/plain" } });
+        const catalogDetails = Object.entries(P).map(([endpoint, val]) => {
+          return `### ${endpoint}\n- **Price:** ${val[1]} USDC (${val[0]} base units)\n- **Response Schema Example:** \`${JSON.stringify(val[2])}\``;
+        }).join("\n\n");
+
+        const llmsTxtContent = `# AgentData UK Intelligence Gateway
+Base URL: https://agentdata.site
+Network: Base (Chain ID: 8453)
+Settlement Asset: USDC (${U})
+Payment Protocol: x402
+
+## Overview
+AgentData UK provides real-time UK intelligence streams across property, automotive, environmental, and macroeconomic sectors. All endpoints require x402 micro-payment authorization prior to payload delivery.
+
+## Endpoint Catalog & Data Schemas
+${catalogDetails}`;
+
+        return new Response(llmsTxtContent, { headers: { ...c, "Content-Type": "text/plain; charset=utf-8" } });
       }
-      return new Response(JSON.stringify({ status: "active", service: "AgentData UK", pay_to: W, endpoints_count: Object.keys(P).length }), { headers: { ...c, "Content-Type": "application/json" } });
+
+      return new Response(JSON.stringify({ 
+        status: "active", 
+        service: "AgentData UK Gateway", 
+        network: "Base", 
+        pay_to: W, 
+        endpoints_count: Object.keys(P).length 
+      }), { headers: { ...c, "Content-Type": "application/json" } });
     }
 
     const cfg = P[p];
@@ -49,7 +71,7 @@ export default {
 
     const paymentHeader = r.headers.get("X-Payment") || r.headers.get("Payment-Signature");
 
-    // Step 1: Issue HTTP 402 challenge if no payment proof header is attached
+    // Issue HTTP 402 challenge if no payment proof header is attached
     if (!paymentHeader) {
       const body = {
         x402Version: "1",
@@ -73,7 +95,7 @@ export default {
       });
     }
 
-    // Step 2: Rigorous On-Chain / Facilitator Verification
+    // Rigorous On-Chain / Facilitator Verification
     try {
       const verifyRes = await fetch("https://x402.org/facilitator/verify", {
         method: "POST",
@@ -108,7 +130,7 @@ export default {
       });
     }
 
-    // Step 3: Verified settlement — deliver real data payload
+    // Verified settlement — deliver real data payload
     return new Response(JSON.stringify({
       status: "success",
       endpoint: p,
