@@ -69,8 +69,8 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
 
-    // 1. Serve HTML Landing Page for Browser Visitors
-    if (url.pathname === '/') {
+    // 1. Serve HTML Landing Page for Homepage requests
+    if (url.pathname === '/' || url.pathname === '') {
       const html = `<!DOCTYPE html>
       <html lang="en">
       <head>
